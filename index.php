@@ -6,6 +6,7 @@ require_once 'config/parameters.php';
 require_once 'controller/UserController.php';
 require_once 'controller/HomeController.php';
 require_once 'controller/ProductController.php';
+require_once 'controller/InvoiceController.php';
 
 if(isset($_GET['c'])){
     $nombre_controlador = ucfirst($_GET['c']).'Controller';
