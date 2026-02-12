@@ -3,17 +3,22 @@ require_once __DIR__ . '/parameters.php';
 
 class Database {
     public static function connect() {
-        $conexion = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
         
-        if($conexion->connect_error){
-            die("Error de conexión: " . $conexion->connect_error);
+        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET . ";port=" . DB_PORT;
+
+        $options = [
+            PDO::ATTR_ERRMODE=> PDO::ERRMODE_EXCEPTION,
+         
+            PDO::ATTR_EMULATE_PREPARES   => false,
+        ];
+
+        try {
+            $conexion = new PDO($dsn, DB_USER, DB_PASS, $options);
+            return $conexion;
+
+        } catch (PDOException $e) {
+            die("Error de conexión: " . $e->getMessage());
         }
-        
- 
-        
-        $conexion->set_charset(DB_CHARSET);
-        
-        return $conexion;
     }
 }
 ?>

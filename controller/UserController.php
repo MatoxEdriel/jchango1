@@ -12,8 +12,6 @@ class UserController {
         require_once 'views/auth/user/register.php';
     }
 
-
-
     public function profile() {
         if(!isset($_SESSION['identity'])){
             header("Location: index.php?c=User&a=login");
@@ -21,14 +19,8 @@ class UserController {
         }
 
         $usuario = $_SESSION['identity'];
-
         require_once 'views/profile/profile.php';
     }
-
-
-
-
-
 
     public function authenticate() {
         if (isset($_POST['email']) && isset($_POST['password'])) {
@@ -38,6 +30,7 @@ class UserController {
             $userDto = $dao->findByEmail($_POST['email']);
 
             if ($userDto && $_POST['password'] == $userDto->password) {
+                
                 $_SESSION['identity'] = $userDto; 
                 header("Location: index.php?c=Home&a=index");
             } else {
@@ -56,6 +49,7 @@ class UserController {
 
             if($nombre && $email && $password){
              
+              
                 $nuevoUsuario = new UserDTO(null, $nombre, $apellido, $email, $password, null);
 
                 $dao = new UserDAO();
@@ -64,9 +58,11 @@ class UserController {
                 if($save){
                     header("Location: index.php?c=User&a=login");
                 } else {
+                    $_SESSION['register_error'] = "Error al guardar";
                     header("Location: index.php?c=User&a=register");
                 }
             } else {
+                $_SESSION['register_error'] = "Faltan datos";
                 header("Location: index.php?c=User&a=register");
             }
         }
@@ -77,6 +73,33 @@ class UserController {
             unset($_SESSION['identity']);
         }
         header("Location: index.php?c=User&a=login");
+    }
+
+    public function index() {
+        // Solo administradores deberían ver esto
+        if(!isset($_SESSION['identity']) || $_SESSION['identity']->rol != 'admin'){
+            header("Location: index.php");
+            exit();
+        }
+
+        $dao = new UserDAO();
+        $users = $dao->getAll();
+        require_once 'views/user/index.php';
+    }
+
+    public function delete() {
+        if(isset($_GET['id'])){
+            $id = $_GET['id'];
+            $dao = new UserDAO();
+            $delete = $dao->delete($id);
+            
+            if($delete){
+                $_SESSION['user_action'] = "Usuario eliminado correctamente";
+            } else {
+                $_SESSION['user_error'] = "No se pudo eliminar el usuario";
+            }
+        }
+        header("Location: index.php?c=User&a=index");
     }
 }
 ?>

@@ -20,39 +20,77 @@ class UserDAO {
         );
     }
 
-    public function findByEmail($email) {
-        $email = $this->db->real_escape_string($email);
-        $sql = "SELECT * FROM users WHERE email = '$email'";
-        $result = $this->db->query($sql);
+    public function getAll() {
+        $sql = "SELECT * FROM users ORDER BY id DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        
+        $users = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $users[] = $this->mapToDTO($row);
+        }
+        return $users;
+    }
 
-        if ($result && $result->num_rows > 0) {
-            $row = $result->fetch_assoc();
+    public function delete($id) {
+        $sql_roles = "DELETE FROM user_roles WHERE user_id = :id";
+        $stmt_roles = $this->db->prepare($sql_roles);
+        $stmt_roles->execute([':id' => $id]);
+
+        $sql = "DELETE FROM users WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([':id' => $id]);
+    }
+
+    public function findByEmail($email) {
+        $sql = "SELECT * FROM users WHERE email = :email";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':email' => $email]);
+        
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row) {
             return $this->mapToDTO($row);
         }
         return null;
     }
 
     public function save(UserDTO $user) {
-        $nombre = $this->db->real_escape_string($user->nombre);
-        $apellido = $this->db->real_escape_string($user->apellido);
-        $email = $this->db->real_escape_string($user->email);
-        $password = $this->db->real_escape_string($user->password);
-        
         $rol = 'cliente';
-
-        $sql = "INSERT INTO users (nombre, apellido, email, password, rol, created_at) 
-                VALUES ('$nombre', '$apellido', '$email', '$password', '$rol', NOW())";
         
-        $guardado = $this->db->query($sql);
+        $sql = "INSERT INTO users (nombre, apellido, email, password, rol, created_at) 
+                VALUES (:nombre, :apellido, :email, :password, :rol, NOW())";
+        
+        try {
+            $this->db->beginTransaction();
 
-        if ($guardado) {
-            $user_id = $this->db->insert_id;
-            $sql_rol = "INSERT INTO user_roles (user_id, role_id) VALUES ($user_id, 3)";
-            $this->db->query($sql_rol);
-            return true;
+            $stmt = $this->db->prepare($sql);
+            $guardado = $stmt->execute([
+                ':nombre'   => $user->nombre,
+                ':apellido' => $user->apellido,
+                ':email'    => $user->email,
+                ':password' => $user->password,
+                ':rol'      => $rol
+            ]);
+
+            if ($guardado) {
+                $user_id = $this->db->lastInsertId();
+                
+                $sql_rol = "INSERT INTO user_roles (user_id, role_id) VALUES (:uid, 3)";
+                $stmt_rol = $this->db->prepare($sql_rol);
+                $stmt_rol->execute([':uid' => $user_id]);
+                
+                $this->db->commit();
+                return true;
+            }
+            
+            $this->db->rollBack();
+            return false;
+
+        } catch (PDOException $e) {
+            $this->db->rollBack();
+            return false;
         }
-
-        return false;
     }
 }
 ?>

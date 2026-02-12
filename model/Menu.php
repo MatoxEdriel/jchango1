@@ -7,15 +7,15 @@ class Menu {
         $opciones = [];
 
         if($rol == 'admin') {
-            $opciones[] = new MenuDTO('Gestionar Productos', 'index.php?c=Producto&a=gestion', '');
+            $opciones[] = new MenuDTO('Gestionar Productos', 'index.php?c=Product&a=index', '');
             $opciones[] = new MenuDTO('Ver Ventas', 'index.php?c=Pedido&a=gestion', '');
-            $opciones[] = new MenuDTO('Usuarios', 'index.php?c=User&a=gestion', '');
+            $opciones[] = new MenuDTO('Usuarios', 'index.php?c=user&a=index', '');
             $opciones[] = new MenuDTO('Reportes', 'index.php?c=Reporte&a=index', '');
         }
         
         elseif($rol == 'empleado') {
             $opciones[] = new MenuDTO('Gestionar Pedidos', 'index.php?c=Pedido&a=gestion', '');
-            $opciones[] = new MenuDTO('Inventario', 'index.php?c=Producto&a=gestion', '');
+            $opciones[] = new MenuDTO('Inventario', 'index.php?c=Product&a=gestion', '');
         }
         
         else {
@@ -28,3 +28,9 @@ class Menu {
     }
 }
 ?>
+
+
+
+
+
+
